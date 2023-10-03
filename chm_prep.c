@@ -64,14 +64,13 @@ float *chm_prep(const double *geom, int snlin, int sncol, int lap_size, float th
         free(fe);
 		free(hole_map2);
 		free(gi);
-		free(out_scene);
+		free(image);
 
         printf("    Filtering pass completed.\n\n");
 
-        //return gi;
         return out_scene;
-
 }
+
 
 float* prepare_filter_elements(int size) {
 	int line, col, nb_fe;

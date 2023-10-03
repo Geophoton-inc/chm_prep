@@ -3,7 +3,7 @@
 # Author's email: bstonge@protonmail.com
 # See https://github.com/Geophoton-inc/cavity_fill_v_3/ for more information.
 # License: GNU General Public license.
-# Version: September 27, 2023
+# Version: October 2, 2023
 
 # The core algorithm was first published in:
 # St-Onge, B., 2008. Methods for improving the quality of a true orthomosaic of Vexcel UltraCam images created using a
