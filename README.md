@@ -11,7 +11,7 @@ High resolution airborne lidar Canopy Height Models (CHMs), or Digital Surface M
 It **leaves all non-problematic pixels unchanged**, so it is quite more targeted than, say, a simple median filter applied to an entire CHM. Moreover, it is made for production, so it runs very fast, and is by default a batch mode processor, processing all the tiles stored in a directory. The user controls all the processing parameters though an `.ini` file.
 
 **Example of a CHM before and after chm_prep is run:**
-![Before and after applying chm_prep](chm_prep_example.png)
+![Before and after applying chm_prep](./pics/chm_prep_example.png)
 
 ## Installing chm_prep
 
@@ -121,7 +121,7 @@ chm_prep is designed for the standard case where a large lidar project is divide
 
 ## Issues and bug reports
 
-If you encounter issues or bugs, please create an issue.
+If you encounter issues or bugs, please create an issue by clicking [here](https://github.com/Geophoton-inc/chm_prep/issues).
 
 ## Contacting the author
 
@@ -147,3 +147,5 @@ https://www.sciencedirect.com/science/article/abs/pii/S0098300409000624
 ## Licence
 
 chm_prep is distributed under the GNU General public licence. Please consult the [licence file](LICENSE).
+
+October 12th, 2023
