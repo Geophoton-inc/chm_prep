@@ -2,16 +2,23 @@
 
 ## What chm_prep does
 
-High resolution airborne lidar Canopy Height Models (CHMs), or Digital Surface Models (DSM) often present **small cavities** over forest canopies (see the left part of the figure below). These are caused by laser pulses travelling deep below the generalized *crown envelope* and generating low returns. They may also show **spikes** caused by high noise if it was not properly removed from the point cloud before creating rasters products such as CHMs. Finally, no-data areas or **isolated no-data pixels**
+High resolution airborne lidar Canopy Height Models (CHMs), or Digital Surface Models (DSM) often present **small cavities** over forest canopies (figure 1a and 2a further down). These are caused by laser pulses travelling deep below the generalized *crown envelope* and generating low returns. They may also show **spikes** (figure 1a) caused by high noise if it was not properly removed from the point cloud before creating rasters products such as CHMs. Finally, no-data areas or **isolated no-data pixels** (figure 2a)
  may also cause problems. **chm_prep** does several things to improve CHMs or DSMs before they are used for, say, individual tree crown (ITC) extraction, or image orthorectification when a lidar DSM constitutes the 3D source. It was designed to:
 - removes cavities and spikes;
 - saturate the values to a minimum (e.g., 0.0 m for a CHM) and to a maximum, if desired;
 - get rid of isolated no-data pixels.
 
-It **leaves all non-problematic pixels unchanged**, so it is quite more targeted than, say, a simple median filter applied to an entire CHM. Moreover, it is made for production, so it runs very fast, and is by default a batch mode processor, processing all the tiles stored in a directory. The user controls all the processing parameters though an `.ini` file.
+It **leaves all non-problematic pixels unchanged**, so it is quite more targeted than, say, a simple median filter applied to an entire CHM. See results in figures 1b and 2b below. Moreover, it is made for production, so it runs very fast, and is by default a batch mode processor, processing all the tiles stored in a directory. The user controls all the processing parameters though an `.ini` file.
 
-**Example of a CHM before and after chm_prep is run:**
-![Before and after applying chm_prep](./pics/chm_prep_example.png)
+**Figure 1a: this CHM contains cavities and spikes (isolated bright pixels):**
+![Before and after applying chm_prep](./pics/demo_CHM_1.png) 
+**Figure 1b: CHM in figure 1a processed with chm_prep (cavities and spikes have been removed):**
+![Before and after applying chm_prep](./pics/demo_CHM_1_prep.png)
+
+**Figure 2a: this CHM contains cavities and isolated no-data pixels (in red, can you spot them?!):**
+![Before and after applying chm_prep](./pics/demo_CHM_2.png) 
+**Figure 2b: CHM in figure 2a processed with chm_prep (cavities and no-data pixels have been removed):**
+![Before and after applying chm_prep](./pics/demo_CHM_2_prep.png)
 
 ## Installing chm_prep
 
@@ -27,6 +34,8 @@ To install, place the .py and .so files in the same directory. Make sure to put 
 The Python script has the following external dependencies:
 - numpy
 - gdal (osgeo)
+
+Please make sure these packages are installed in your Python environment.
 
 ### Compiling from source
 
@@ -60,7 +69,7 @@ The chm_prep.ini file contains all the user parameters controlling the I/O and t
 
 #### Input/Output parameters
 
-All .tif files in the `source_dir` will be processed. The results will be written to the `dest_dir`. The `_pr` suffix (for "_prep") will be added to the original file names.
+All .tif files in the `source_dir` will be processed. The results will be written to the `dest_dir`. The `_prep` suffix (for "_prep") will be added to the original file names. The `dest_dir` will be created if it does not exist.
 
 #### Filtering parameters
 
@@ -112,12 +121,15 @@ The first option, `transfer`, simply leaves the no-data pixels intact (but the u
 Holes having a pixel area smaller than `hole_size_thr` will be filled. The value of `hole_size_thr` must be an integer representing the number of pixels (pixel area) in individual no-data holes to be used as a threshold.
 
 
-## Tile size, memory management, and buffering
+## Tile size, memory management, buffering and CRS
 
-chm_prep is designed for the standard case where a large lidar project is divided in rather small tiles (1 km x 1 km, 2 km x 2 km, etc.). Running chm_prep on a very large file could cause the program to exit because it would be out of memory. Moreover, edge effects can occur where cavities are very close to the edge of a raster lidar tile. Cavities or spikes might be left undetected in these slim areas. For this reason, it is recommended to buffer the tiles by at least the amount of pixels of the largest Lapalian kernel width before running chm_prep. The filtered output rasters can be cut back to their cores and eventually mosaicked.
+chm_prep is designed for the standard case where a large lidar project is divided in rather small tiles (1 km x 1 km, 2 km x 2 km, etc.). Running chm_prep on a very large file could cause the program to exit because it would be out of memory. Moreover, edge effects can occur where cavities are very close to the edge of a raster lidar tile. Cavities or spikes might be left undetected in these slim areas. For this reason, it is recommended to buffer the tiles by at least the amount of pixels of the largest Lapalian kernel width before running chm_prep. The filtered output rasters can be cut back to their cores and eventually mosaicked. Finally, the coordinate reference system (CRS) must be defined within the input .tif files.
 
 ## Demo data
 
+Demo data for testing chm_prep can be found [here](https://github.com/Geophoton-inc/chm_prep/tree/main/demo_data).
+- `demo_CHM_1.tif` contains cavities and spikes;
+- `demo_CHM_2.tif` contains cavities and isolated no-data pixels.
 
 ## Issues and bug reports
 
