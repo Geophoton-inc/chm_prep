@@ -56,15 +56,18 @@ float *chm_prep(const double *geom, int snlin, int sncol, int lap_size, float th
 
         hole_map2 = find_holes(lap_size, snlin, sncol, mini, maxi, minj, maxj, thr_cav, thr_spk, dil_radius, fe, image);
 
+     	free(fe);
+
 	    gi = interpolate(snlin, sncol, mini, maxi, minj, maxj, image, hole_map2);
+
+		free(image);
 
         out_scene = median_filter(med_size, snlin, sncol, mini, maxi, minj, maxj, gi, hole_map2);
 
-        // Free pointers.
-        free(fe);
+        // Free pointers.   
 		free(hole_map2);
 		free(gi);
-		free(image);
+	
 
         printf("    Filtering pass completed.\n\n");
 

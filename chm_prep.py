@@ -3,7 +3,7 @@
 # Author's email: bstonge@protonmail.com
 # See https://github.com/Geophoton-inc/cavity_fill_v_3/ for more information.
 # License: GNU General Public license.
-# Version: October 2, 2023
+# Version: October 12, 2023
 
 # The core algorithm was first published in:
 # St-Onge, B., 2008. Methods for improving the quality of a true orthomosaic of Vexcel UltraCam images created using a
@@ -36,35 +36,35 @@ class Params:
         try:
             self.lap_size = int(pass_params[0])  # Size of the Laplacian filter in pixels.
         except ValueError:
-            print('Invalid parameter value for Laplacian filter in pixels in cf.ini file. '
+            print('Invalid parameter value for Laplacian filter in pixels in chm_prep.ini file. '
                   'This value must be an integer.')
             print('Program halted')
             sys.exit(1)
         try:
             self.thr_lap = float(pass_params[1])   # Threshold value for the Laplacian filter.
         except ValueError:
-            print('Invalid parameter value for the Laplacian filter cavity threshold in cf.ini file. '
+            print('Invalid parameter value for the Laplacian filter cavity threshold in chm_prep.ini file. '
                   'This value must be a float or an integer.')
             print('Program halted')
             sys.exit(1)
         try:
             self.thr_spk = float(pass_params[2])   # Threshold value for the Laplacian filter.
         except ValueError:
-            print('Invalid parameter value for the Laplacian filter spike threshold in cf.ini file. '
+            print('Invalid parameter value for the Laplacian filter spike threshold in chm_prep.ini file. '
                   'This value must be a float or an integer.')
             print('Program halted')
             sys.exit(1)
         try:
             self.med_size = int(pass_params[3])   # Size of the median filter in pixels.
         except ValueError:
-            print('Invalid parameter value for the median filter in pixels in cf.ini file. '
+            print('Invalid parameter value for the median filter in pixels in chm_prep.ini file. '
                   'This value must be an integer.')
             print('Program halted')
             sys.exit(1)
         try:
             self.dil_radius = int(pass_params[4])   # Radius of the dilation filter in pixels.
         except ValueError:
-            print('Invalid parameter value for the dilation filter in pixels in cf.ini file. '
+            print('Invalid parameter value for the dilation filter in pixels in chm_prep.ini file. '
                   'This value must be an integer.')
             print('Program halted')
             sys.exit(1)
@@ -90,7 +90,7 @@ def get_processing_parameters(cfile):
 
 def main():
 
-    # Read processing parameter from the cf.ini file.
+    # Read processing parameter from the chm_prep.ini file.
     proc_par = get_processing_parameters('chm_prep.ini')
     # Get the processing parameter values.
     source_dir = proc_par['source_dir']
@@ -127,8 +127,14 @@ def main():
     if not os.path.exists(dest_dir):
         os.makedirs(dest_dir)
 
+    # Get the operating system ID to load the proper shared library.
+    os_id = sys.platform
+    if os_id != 'linux' and os_id != 'win32':
+        print('The shared library (chm_prep_linux.so or chm_prep_win.so) for your operating system was not found.')
+        print('Program halted')
+        sys.exit(1)
     # Load the C shared library containing the cavity_fill() function.
-    lib = cdll.LoadLibrary('./chm_prep.so')
+    lib = cdll.LoadLibrary('./chm_prep_' + os_id + '.so')
     chm_prep = lib.chm_prep # Get the function from the library.
 
     # Loop through the input CHMs.
@@ -167,7 +173,7 @@ def main():
                 nodata_mask = np.invert(morphology.remove_small_holes(np.invert(nodata_mask), hole_size_thr))
 
         # Create output file name.
-        output_file_name = os.path.join(dest_dir, os.path.basename(chm_file).replace('.tif', '_cf.tif'))
+        output_file_name = os.path.join(dest_dir, os.path.basename(chm_file).replace('.tif', '_prep.tif'))
         # Create output image.
         driver = gdal.GetDriverByName("Gtiff")
         out_chm = driver.Create(output_file_name, chm.RasterXSize, chm.RasterYSize, 1, gdal.GDT_Float32)
