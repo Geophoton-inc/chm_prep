@@ -2,33 +2,38 @@
 
 ## What chm_prep does
 
-High resolution airborne lidar Canopy Height Models (CHMs), or Digital Surface Models (DSM) often present **small cavities** over forest canopies (figure 1a and 2a further down). These are caused by laser pulses travelling deep below the generalized *crown envelope* and generating low returns. They may also show **spikes** (figure 1a) caused by high noise if it was not properly removed from the point cloud before creating rasters products such as CHMs. Finally, no-data areas or **isolated no-data pixels** (figure 2a)
- may also cause problems. **chm_prep** does several things to improve CHMs or DSMs before they are used for, say, individual tree crown (ITC) extraction, or image orthorectification when a lidar DSM constitutes the 3D source. It was designed to:
+High resolution airborne lidar Canopy Height Models (CHMs), or Digital Surface Models (DSM) often present **small cavities** over forest canopies (figure 1a and 2a). These are caused by laser pulses travelling deep below the generalized *crown envelope* and generating low returns. CHMs and DSMs may also show **spikes** (figure 1a) caused by high noise (if it was not properly removed from the point cloud before creating raster products). Finally, **isolated no-data pixels** (figure 2a) or extreme no-data values
+ may also cause problems. **chm_prep** can remove all of these. This improves the CHMs or DSMs before they are used for, say, individual tree crown (ITC) extraction, or image orthorectification when a lidar DSM constitutes the 3D source. All in all, it was designed to:
 - removes cavities and spikes;
-- saturate the values to a minimum (e.g., 0.0 m for a CHM) and to a maximum, if desired;
-- get rid of isolated no-data pixels.
+- get rid of isolated no-data pixels;
+- modify the no-data value if desired;
+- and saturate the values to a minimum (e.g., 0.0 m for a CHM) and to a maximum, if desired;
 
-It **leaves all non-problematic pixels unchanged**, so it is quite more targeted than, say, a simple median filter applied to an entire CHM. See results in figures 1b and 2b below. Moreover, it is made for production, so it runs very fast, and is by default a batch mode processor, processing all the tiles stored in a directory. The user controls all the processing parameters though an `.ini` file.
+The user controls all the processing parameters.
 
-**Figure 1a: this CHM contains cavities and spikes (isolated bright pixels):**
-![Before and after applying chm_prep](./pics/demo_CHM_1.png) 
-**Figure 1b: CHM in figure 1a processed with chm_prep (cavities and spikes have been removed):**
-![Before and after applying chm_prep](./pics/demo_CHM_1_prep.png)
+It **leaves all non-problematic pixels unchanged**, so it is quite more targeted than, say, a simple median filter applied to all pixels. See for example the results in figures 1b and 2b below. Moreover, it is made for production, so it runs very fast (C speed!), and is by default a batch mode processor ready to process 1000s of tiles.
 
-**Figure 2a: this CHM contains cavities and isolated no-data pixels (in red, can you spot them?!):**
-![Before and after applying chm_prep](./pics/demo_CHM_2.png) 
-**Figure 2b: CHM in figure 2a processed with chm_prep (cavities and no-data pixels have been removed):**
-![Before and after applying chm_prep](./pics/demo_CHM_2_prep.png)
+Figure 1a: this CHM contains cavities and spikes (isolated bright pixels) |  Figure 1b: CHM in figure 1a processed with chm_prep (cavities and spikes have been removed)
+:-------------------------:|:-------------------------:
+![Before and after applying chm_prep](./pics/demo_CHM_1.png) | ![Before and after applying chm_prep](./pics/demo_CHM_1_prep.png)
+
+
+Figure 2a: this CHM contains cavities and isolated no-data pixels (in red, can you spot them?) |  Figure 2b: CHM in figure 2a processed with chm_prep (cavities and no-data pixels have been removed)
+:-------------------------:|:-------------------------:
+![Before and after applying chm_prep](./pics/demo_CHM_2.png) | ![Before and after applying chm_prep](./pics/demo_CHM_2_prep.png)
+
 
 ## Installing chm_prep
 
 ### Code structure
 
-chm_prep is made of a Python script (`chm_prep.py`) which is responsible for the I/O, the no-data management, and for launching the core cavity filling and spike removing algorithm, which, for efficiency reasons, is coded in C (`chm_prep.c`) and compiled to a shared library (`chm_prep.so`) called by the Python script.
+chm_prep is composed of a Python script (`chm_prep.py`) which deals with the I/O, the no-data management, and launches the core cavity filling and spike removing algorithm, which, for efficiency reasons, is coded in C (`chm_prep.c`) and compiled to binary shared libraries (`chm_prep_linux.so` or `chm_prep_win32.so`).
 
 ### Installation
 
-To install, place the .py and .so files in the same directory. Make sure to put the .so file corresponding to your OS (GNU/Linux or Windows).
+To install, place all the files (.py and .so, etc.) in the same directory (clone the repo to a local directory). Among the installed files, you'll see the two C binaries: `chm_prep_linux.so` and `chm_prep_win32.so`, respectively for Linux/GNU and Windows operating systems. When running the Python script, the proper version will automatically be chosen based on your OS. 
+
+Note that there are currently no MacOS binary, but you can [compile one from source](#Compiling) if desired and adjust the Python script accordingly.
 
 #### Python dependencies
 The Python script has the following external dependencies:
@@ -37,11 +42,12 @@ The Python script has the following external dependencies:
 
 Please make sure these packages are installed in your Python environment.
 
-### Compiling from source
+### Compiling from source<a name="Compiling"></a>
 
 If you prefer to compile for source (chm_prep.c), make sure to compile to a shared library. We hereby provide a single example of a compile command (for gcc):
 
-    gcc -shared -o chm_prep.so -fPIC chm_prep.c
+    For GNU/Linux: gcc -shared -o chm_prep_linux.so -fPIC chm_prep.c
+    For Windows: gcc -shared -o chm_prep_win32.so -fPIC chm_prep.c
 
 ## Principles of the filtering algorithm
 
