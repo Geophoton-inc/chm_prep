@@ -44,10 +44,11 @@ Please make sure these packages are installed in your Python environment.
 
 ### Compiling from source
 
-If you prefer to compile for source (chm_prep.c), make sure to compile to a shared library with the appropriate name for your OS. We hereby provide a single example of a compile command (for gcc):
+If you prefer to compile for source (chm_prep.c), make sure to compile to a shared library with the appropriate name for your OS. We hereby provide gcc examples compile commands:
 
-    For GNU/Linux: gcc -shared -o chm_prep_linux.so -fPIC chm_prep.c
-    For Windows: gcc -shared -o chm_prep_win32.so -fPIC chm_prep.c
+- For GNU/Linux: `gcc -fPIC -shared -o chm_prep_linux.so chm_prep.c`
+
+- For Windows: `gcc -fPIC -shared -o chm_prep_win32.so chm_prep.c`
 
 ## Principles of the filtering algorithm
 

@@ -1,3 +1,0 @@
-gcc -shared -o chm_prep_linux.so -fPIC chm_prep.c
-
-gcc -shared -o chm_prep_win_32.so -fPIC chm_prep.c
