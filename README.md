@@ -144,6 +144,8 @@ If you encounter issues or bugs, please create an issue by clicking [here](https
 
 You can email the author, Benoît St-Onge, at bstonge@protonmail.com or bso@geophoton.ca.
 
+You're also invited to visit our web site: http://www.geophoton.ca
+
 
 ## Please give us credit
 
@@ -166,8 +168,12 @@ https://www.sciencedirect.com/science/article/abs/pii/S0098300409000624
 chm_prep is distributed under the GNU General public licence. Please consult the [licence file](LICENSE).
 
 
+## Diclaimer
+
+THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 ## Documentation version
-Last update: October 12th, 2023.
+Last update: October 17th, 2023.
 
 
 
