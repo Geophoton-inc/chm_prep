@@ -39,6 +39,7 @@ Note that there are currently no MacOS binary, but you can [compile one from sou
 The Python script has the following external dependencies:
 - numpy
 - gdal (osgeo)
+- skimage (conditional import in chm_prep.py)
 
 Please make sure these packages are installed in your Python environment.
 
