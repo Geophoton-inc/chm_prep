@@ -3,7 +3,7 @@
 // Author's email: bstonge@protonmail.com
 // See https://github.com/Geophoton-inc/cavity_fill_v_3/ for more information.
 // License: GNU General Public license.
-// Version: October 2, 2023
+// Version: October 27, 2023
 
 // The core algorithm was first published in:
 // St-Onge, B., 2008. Methods for improving the quality of a true orthomosaic of Vexcel UltraCam images created using a
@@ -216,9 +216,9 @@ unsigned char * find_holes(int size, int snlin, int sncol, int mini, int maxi, i
 }
 
 
-float * interpolate(int snlin, int sncol, int mini, int maxi, int minj, int maxj, float *scene, unsigned char *hole_map2) {
+float * interpolate(int snlin, int sncol, int mini, int maxi, int minj, int maxj, float *g, unsigned char *hole_map2) {
 	unsigned long int ncol, nlig;
-	float ex, *g, *gi;
+	float ex, *gi;
 
 	unsigned char search_left,left,search_right,right,search_up,up,search_down,down;
 	unsigned long int i,j;
@@ -227,24 +227,17 @@ float * interpolate(int snlin, int sncol, int mini, int maxi, int minj, int maxj
 	unsigned int n;
 	float left_avg,right_avg,up_avg,down_avg,n_avg;
 
-    if ((g = (float *)malloc((long int)snlin*(long int)sncol*(long int)4)) == NULL) {
-      printf("\n\n    Insufficient memory for the output lidar scene buffer.\n");
-      exit(0);
-      }
-
     if ((gi = (float *)malloc((long int)snlin*(long int)sncol*(long int)4)) == NULL) {
       printf("\n\n    Insufficient memory for the output lidar scene buffer.\n");
       exit(0);
       }
 
     for(n=0;n<snlin*sncol;n++) {
-		*(gi+n)=*(scene+n);
+		*(gi+n)=*(g+n);
 	}
 
 	nlig = snlin;
 	ncol = sncol;
-
-	g = scene;
 
 	printf("\n    Interpolating across cavities.");
 
