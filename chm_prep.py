@@ -1,9 +1,13 @@
 # Program for removing cavities and spikes from a lidar Canopy Height Model (CHM).
+# This part of the code only reads the input directorry and lists the files to be processed. It then sends OS calls to
+# the chm_prep_process.py script to process the CHMs. This avoids loading the shared library cumulatively in memory
+# to avoid memory leaks, as the shared library is not unloaded from memory after each call.
+
 # Author: Benoît St-Onge, Geophoton inc. (www.geophoton.ca)
 # Author's email: bstonge@protonmail.com
 # See https://github.com/Geophoton-inc/cavity_fill_v_3/ for more information.
 # License: GNU General Public license.
-# Version: October 12, 2023
+# Version: February 7, 2024
 
 # The core algorithm was first published in:
 # St-Onge, B., 2008. Methods for improving the quality of a true orthomosaic of Vexcel UltraCam images created using a
@@ -19,55 +23,10 @@
 # raster file. The C shared library must reside in the same directory as this Python program. The proper version
 # (Linux/GNU or Windows) must be installed.
 
-from ctypes import c_void_p, c_int, c_float, cdll
-from numpy.ctypeslib import ndpointer
-import numpy as np
-from osgeo import gdal
-from osgeo.gdal_array import CopyDatasetInfo, BandWriteArray, BandReadAsArray
 import sys
 import glob
 import os
 import configparser
-
-
-class Params:
-    # This class contains the processing parameters for a single pass of the cavity filling algorithm.
-    def __init__(self, pass_params):
-        try:
-            self.lap_size = int(pass_params[0])  # Size of the Laplacian filter in pixels.
-        except ValueError:
-            print('Invalid parameter value for Laplacian filter in pixels in chm_prep.ini file. '
-                  'This value must be an integer.')
-            print('Program halted')
-            sys.exit(1)
-        try:
-            self.thr_lap = float(pass_params[1])   # Threshold value for the Laplacian filter.
-        except ValueError:
-            print('Invalid parameter value for the Laplacian filter cavity threshold in chm_prep.ini file. '
-                  'This value must be a float or an integer.')
-            print('Program halted')
-            sys.exit(1)
-        try:
-            self.thr_spk = float(pass_params[2])   # Threshold value for the Laplacian filter.
-        except ValueError:
-            print('Invalid parameter value for the Laplacian filter spike threshold in chm_prep.ini file. '
-                  'This value must be a float or an integer.')
-            print('Program halted')
-            sys.exit(1)
-        try:
-            self.med_size = int(pass_params[3])   # Size of the median filter in pixels.
-        except ValueError:
-            print('Invalid parameter value for the median filter in pixels in chm_prep.ini file. '
-                  'This value must be an integer.')
-            print('Program halted')
-            sys.exit(1)
-        try:
-            self.dil_radius = int(pass_params[4])   # Radius of the dilation filter in pixels.
-        except ValueError:
-            print('Invalid parameter value for the dilation filter in pixels in chm_prep.ini file. '
-                  'This value must be an integer.')
-            print('Program halted')
-            sys.exit(1)
 
 
 def get_processing_parameters(cfile):
@@ -94,27 +53,6 @@ def main():
     proc_par = get_processing_parameters('chm_prep.ini')
     # Get the processing parameter values.
     source_dir = proc_par['source_dir']
-    dest_dir = proc_par['dest_dir']
-    pass1_params = proc_par['pass1_params'].split(',')
-    try:  # If the user asked for a second pass.
-        pass2_params = proc_par['pass2_params'].split(',')
-    except KeyError:  # If the user did not ask for a second pass.
-        pass2_params = None
-    force_min_val = proc_par.getboolean('force_min_val')
-    if force_min_val:
-        min_val = proc_par.getfloat('min_val')
-    force_max_val = proc_par.getboolean('force_max_val')
-    if force_max_val:
-        max_val = proc_par.getfloat('max_val')
-    nodata_processing = proc_par['nodata_processing']
-    if nodata_processing == 'remove_small_holes':
-        hole_size_thr = int(proc_par['hole_size_thr'])
-    output_nodata_val = float(proc_par['output_nodata_val'])
-
-    # Create a list of 1 or 2 objects of class Params (depending on the user asking for 1 or 2 passes).
-    params_list = [Params(pass1_params)]
-    if pass2_params is not None:  # If the user asked for 2 passes.
-        params_list.append(Params(pass2_params))
 
     # Create a list of input .tif files.
     input_chms = glob.glob(os.path.join(source_dir, '*.tif'))
@@ -123,108 +61,11 @@ def main():
         print('Program halted')
         sys.exit(1)
 
-    # If the destination folder does not exist, create it.
-    if not os.path.exists(dest_dir):
-        os.makedirs(dest_dir)
-
-    # Get the operating system ID to load the proper shared library.
-    os_id = sys.platform
-    if os_id != 'linux' and os_id != 'win32':
-        print('The shared library (chm_prep_linux.so or chm_prep_win.so) for your operating system was not found.')
-        print('Program halted')
-        sys.exit(1)
-    # Load the C shared library containing the cavity_fill() function.
-    lib = cdll.LoadLibrary('./chm_prep_' + os_id + '.so')
-    chm_prep = lib.chm_prep # Get the function from the library.
-
     # Loop through the input CHMs.
     for index, chm_file in enumerate(input_chms):
         print(f'Processing CHM {index + 1} of {len(input_chms)}: {chm_file}')
 
-        # Open the input CHM.
-        chm = gdal.Open(chm_file, gdal.GA_ReadOnly)
-        if chm is None:
-            print(f'Could not open {chm_file}')
-            sys.exit(1)
-        chm_ncol = chm.RasterXSize
-        chm_nlin = chm.RasterYSize
-        chm_band = chm.GetRasterBand(1)
-        chm_array = BandReadAsArray(chm_band)
-
-        # Create the nodata mask.
-        input_nodata_val = chm_band.GetNoDataValue()
-
-        if input_nodata_val is not None:  # If the no-data value is defined.
-            # Check is input_nodata_val is not a number (NaN).
-            # For the case where the no-data values is defined as not-a-number (NaN).
-            # See: https://www.mail-archive.com/gdal-dev@lists.osgeo.org/msg36140.html
-            if np.isnan(input_nodata_val):
-                nodata_mask = np.isnan(chm_array)  # Create the no-data mask from NaN.
-            else:
-                nodata_mask = chm_array == input_nodata_val  # Create the no-data mask from number.
-
-        if nodata_processing == 'set_to_zero':
-            chm_array[nodata_mask] = 0
-        else:
-            if nodata_processing == 'remove_small_holes':
-                from skimage import morphology
-                chm_array[nodata_mask] = 0  # Set to zero so the nodata values can be filled.
-                # Remove small holes (a double invert is necessary for the logic of the morphology function).
-                nodata_mask = np.invert(morphology.remove_small_holes(np.invert(nodata_mask), hole_size_thr))
-
-        # Create output file name.
-        output_file_name = os.path.join(dest_dir, os.path.basename(chm_file).replace('.tif', '_prep.tif'))
-        # Create output image.
-        driver = gdal.GetDriverByName("Gtiff")
-        out_chm = driver.Create(output_file_name, chm.RasterXSize, chm.RasterYSize, 1, gdal.GDT_Float32)
-        if out_chm is None:
-            print('Cannot create output file ', output_file_name)
-            print('Program halted')
-            sys.exit(1)
-        CopyDatasetInfo(chm, out_chm)
-        array_out = out_chm.GetRasterBand(1)
-
-        # Create a zero array with a proper memory address for storing the CHM array.
-        array_zero = np.zeros((chm_nlin, chm_ncol), dtype=float)
-
-        # Loop through the passes (1 or 2).
-        for pass_params in params_list:
-            print('    Pass', params_list.index(pass_params) + 1, 'of', len(params_list))
-
-            # Transfer the values of CHM array into array. This fixes the unusable address issue if chm_array is
-            # transferred directly to the C function.
-            array = array_zero + chm_array
-
-            chm_prep.restype = ndpointer(dtype=c_float,  # Set result type.
-                                     shape=(chm_nlin, chm_ncol))  # Set result shape.
-
-            # Call cavity_fill() function in the C shared library and pass the input array pointer to the function.
-            chm_array = chm_prep(c_void_p(array.ctypes.data),
-                                    c_int(chm_nlin),
-                                    c_int(chm_ncol),
-                                    c_int(pass_params.lap_size),
-                                    c_float(pass_params.thr_lap),
-                                    c_float(pass_params.thr_spk),
-                                    c_int(pass_params.med_size),
-                                    c_int(pass_params.dil_radius)
-                                    )
-
-        # Force the minimum and maximum values if requested by the user.
-        if force_min_val:
-            chm_array[chm_array < min_val] = min_val
-        if force_max_val:
-            chm_array[chm_array > max_val] = max_val
-
-        if input_nodata_val is not None:  # If the no-data value is defined.
-            if nodata_processing == 'transfer' or nodata_processing == 'remove_small_holes':
-                chm_array[nodata_mask] = output_nodata_val
-
-        # Set output nodata value.
-        array_out.SetNoDataValue(output_nodata_val)
-        BandWriteArray(array_out, chm_array)
-        # Nullify the pointers to the input and output files.
-        chm = None
-        out_chm = None
+        os.system(f'python chm_prep_process.py {chm_file}')
 
 
 if __name__ == '__main__':

@@ -27,7 +27,7 @@ Figure 2a: this CHM contains cavities and isolated no-data pixels (in red, can y
 
 ### Code structure
 
-chm_prep is composed of a Python script (`chm_prep.py`) which deals with the I/O, the no-data management, and launches the core cavity filling and spike removing algorithm, which, for efficiency reasons, is coded in C (`chm_prep.c`) and compiled to binary shared libraries (`chm_prep_linux.so` or `chm_prep_win32.so`).
+chm_prep is composed of two Python scripts (`chm_prep.py` and `chm_prep_process.py`) which deal with the I/O and the no-data management. `chm_prep_process.py` launches the core cavity filling and spike removing algorithm, which, for efficiency reasons, is coded in C (`chm_prep.c`) and compiled to binary shared libraries (`chm_prep_linux.so` or `chm_prep_win32.so`). `chm_prep.py` makes OS calls to `chm_prep_process.py`, so make sure your virtual environment (if any) is activated before you launch chm_prep.py`.
 
 ### Installation
 
